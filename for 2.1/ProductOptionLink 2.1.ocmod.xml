@@ -1,0 +1,1055 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+	<name>Product Option Link - Опция как ссылка на товар</name>
+	<version>2.9</version>
+	<author>Pulemet</author>
+	<code>ProductOptionLink</code>
+
+	<file path="admin/language/russian/catalog/option.php">
+		<operation>
+			<search><![CDATA[
+				$_['text_checkbox']
+				]]>
+			</search>
+				<add position="before"><![CDATA[
+			$_['text_link']         	    = 'Ссылка на товар';
+				]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/language/english/catalog/option.php">
+		<operation>
+			<search><![CDATA[
+				$_['text_checkbox']
+				]]>
+			</search>
+				<add position="before"><![CDATA[
+			$_['text_link']         	    = 'Link to the product';
+				]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/controller/catalog/option.php">
+		<operation>
+			<search><![CDATA[
+				$data['text_checkbox']
+				]]>
+			</search>
+				<add position="before"><![CDATA[
+			$data['ProductOptionLink_status'] = $this->config->get('ProductOptionLink_status');
+			$data['text_link'] = $this->language->get('text_link');
+				]]></add>
+		</operation>
+
+		<operation>
+			<search><![CDATA[
+				$this->request->post['type'] == 'checkbox'
+				]]>
+			</search>
+				<add position="replace"><![CDATA[
+			$this->request->post['type'] == 'link' || $this->request->post['type'] == 'checkbox'
+				]]></add>
+		</operation>
+
+		<operation>
+			<search><![CDATA[
+				$option['type'] == 'checkbox'
+				]]>
+			</search>
+				<add position="replace"><![CDATA[
+			$option['type'] == 'link' || $option['type'] == 'checkbox'
+				]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/view/template/catalog/option_form.tpl">
+		<operation>
+			<search><![CDATA[
+				<?php if ($type == 'select') { ?>
+				]]>
+			</search>
+				<add position="before"><![CDATA[
+			<?php if ($type == 'link' && $ProductOptionLink_status) { ?>
+				<option value="link" selected="selected"><?php echo $text_link; ?></option>
+            <?php } elseif ($ProductOptionLink_status) { ?>
+                <option value="link"><?php echo $text_link; ?></option>
+            <?php } ?>
+				]]></add>
+		</operation>
+
+		<operation>
+			<search><![CDATA[
+				this.value == 'checkbox'
+				]]>
+			</search>
+				<add position="replace"><![CDATA[
+			this.value == 'link' || this.value == 'checkbox'
+				]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/model/catalog/product.php">
+		<operation>
+			<search index="0"><![CDATA[
+				if ($product_option['type'] == 'select' || $product_option['type'] == 'radio' || $product_option['type'] == 'checkbox' || $product_option['type'] == 'image') {
+				]]>
+			</search>
+				<add position="replace"><![CDATA[
+			if ($product_option['type'] == 'link') {
+					if (isset($product_option['product_option_value'])) {
+						$this->db->query("INSERT INTO " . DB_PREFIX . "product_option SET product_id = '" . (int)$product_id . "', option_id = '" . (int)$product_option['option_id'] . "', value = '" . $this->db->escape($product_option['value']) . "', required = '" . (int)$product_option['required'] . "'");
+
+						$product_option_id = $this->db->getLastId();
+
+						foreach ($product_option['product_option_value'] as $product_option_value) {
+
+							if (isset($product_option_value['subtract'])){
+								$product_option_value['subtract'] = $product_option_value['subtract'];
+							} else{
+								$product_option_value['subtract'] = 0;
+							}
+
+							if (isset($product_option_value['price_prefix'])){
+								$product_option_value['price_prefix'] = $product_option_value['price_prefix'];
+							} else{
+								$product_option_value['price_prefix'] = 0;
+							}
+
+							$this->db->query("INSERT INTO " . DB_PREFIX . "product_option_value SET product_option_id = '" . (int)$product_option_id . "', product_id = '" . (int)$product_id . "', option_id = '" . (int)$product_option['option_id'] . "', option_value_id = '" . (int)$product_option_value['option_value_id'] . "', quantity = '" . (int)$product_option_value['quantity'] . "', subtract = '" . (int)$product_option_value['subtract'] . "', price = '" . (float)$product_option_value['price'] . "' , price_prefix = '" . $this->db->escape($product_option_value['price_prefix']) . "', points = '" . (int)$product_option_value['points'] . "', points_prefix = '" . $this->db->escape($product_option_value['points_prefix']) . "', weight = '" . (float)$product_option_value['weight'] . "', weight_prefix = '" . $this->db->escape($product_option_value['weight_prefix']) . "'") ;
+						}
+					}
+				} elseif ($product_option['type'] == 'select' || $product_option['type'] == 'radio' || $product_option['type'] == 'checkbox' || $product_option['type'] == 'image') {
+				]]></add>
+		</operation>
+
+		<operation>
+			<search index="1"><![CDATA[
+				if ($product_option['type'] == 'select' || $product_option['type'] == 'radio' || $product_option['type'] == 'checkbox' || $product_option['type'] == 'image') {
+				]]>
+			</search>
+				<add position="replace"><![CDATA[
+			if ($product_option['type'] == 'link') {
+					if (isset($product_option['product_option_value'])) {
+						$this->db->query("INSERT INTO " . DB_PREFIX . "product_option SET product_option_id = '" . (int)$product_option['product_option_id'] . "', product_id = '" . (int)$product_id . "', option_id = '" . (int)$product_option['option_id'] . "', value = '" . $this->db->escape($product_option['value']) . "', required = '" . (int)$product_option['required'] . "'");
+
+						$product_option_id = $this->db->getLastId();
+
+						foreach ($product_option['product_option_value'] as $product_option_value) {
+
+							if (isset($product_option_value['subtract'])){
+								$product_option_value['subtract'] = $product_option_value['subtract'];
+							} else{
+								$product_option_value['subtract'] = 0;
+							}
+
+							if (isset($product_option_value['price_prefix'])){
+								$product_option_value['price_prefix'] = $product_option_value['price_prefix'];
+							} else{
+								$product_option_value['price_prefix'] = 0;
+							}
+
+							$this->db->query("INSERT INTO " . DB_PREFIX . "product_option_value SET product_option_value_id = '" . (int)$product_option_value['product_option_value_id'] . "', product_option_id = '" . (int)$product_option_id . "', product_id = '" . (int)$product_id . "', option_id = '" . (int)$product_option['option_id'] . "', option_value_id = '" . (int)$product_option_value['option_value_id'] . "', quantity = '" . (int)$product_option_value['quantity'] . "', subtract = '" . (int)$product_option_value['subtract'] . "', price = '" . (float)$product_option_value['price'] . "' , price_prefix = '" . $this->db->escape($product_option_value['price_prefix']) . "', points = '" . (int)$product_option_value['points'] . "', points_prefix = '" . $this->db->escape($product_option_value['points_prefix']) . "', weight = '" . (float)$product_option_value['weight'] . "', weight_prefix = '" . $this->db->escape($product_option_value['weight_prefix']) . "'") ;
+						}
+					}
+				} elseif ($product_option['type'] == 'select' || $product_option['type'] == 'radio' || $product_option['type'] == 'checkbox' || $product_option['type'] == 'image') {
+				]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/controller/catalog/product.php">
+		<operation>
+			<search><![CDATA[
+				foreach ($data['product_options'] as $product_option) {
+				]]>
+			</search>
+				<add position="before"><![CDATA[
+				$this->load->language('catalog/copyOptionLink');
+
+				$data['ProductOptionLink_status'] = $this->config->get('ProductOptionLink_status');
+				$data['ProductOptionLink_link_view'] = $this->config->get('ProductOptionLink_link_view');
+				if ($this->config->get('ProductOptionLink_on_off_name')) {
+					$data['ProductOptionLink_on_off_name'] = $this->config->get('ProductOptionLink_on_off_name');
+				}else{
+					$data['ProductOptionLink_on_off_name'] = 0;
+				}
+				if ($this->config->get('ProductOptionLink_on_off_images')) {
+					$data['ProductOptionLink_on_off_images'] = $this->config->get('ProductOptionLink_on_off_images');
+				}else{
+					$data['ProductOptionLink_on_off_images'] = 0;
+				}
+
+				$data['entry_link_view'] = $this->language->get('entry_link_view');
+				$data['entry_link'] = $this->language->get('entry_link');
+				$data['entry_linkproduct'] = $this->language->get('entry_linkproduct');
+				$data['entry_link_name'] = $this->language->get('entry_link_name');
+				$data['entry_link_image'] = $this->language->get('entry_link_image');
+				$data['entry_link_copy'] = $this->language->get('entry_link_copy');
+				$data['entry_link_copy_title'] = $this->language->get('entry_link_copy_title');
+				$data['entry_modal_product_main'] = $this->language->get('entry_modal_product_main');
+
+				$data['link_view_0'] = $this->language->get('link_view_0');
+				$data['link_view_1'] = $this->language->get('link_view_1');
+				$data['link_view_2'] = $this->language->get('link_view_2');
+				$data['link_view_3'] = $this->language->get('link_view_3');
+				$data['link_danger'] = $this->language->get('link_danger');
+				$data['text_on'] = $this->language->get('text_on');
+				$data['text_off'] = $this->language->get('text_off');
+				$data['text_option'] = $this->language->get('text_option');
+				$data['text_product'] = $this->language->get('text_product');
+
+				if(isset($this->request->get['product_id'])){
+					$data['product_main']['product_id'] = $this->request->get['product_id'];
+					$product_info_main = $this->model_catalog_product->getProduct($data['product_main']['product_id']);
+
+					$data['product_main']['product_name'] = $product_info_main['name'];
+				} else {
+					$data['product_main']['product_id'] = '';
+
+					$data['product_main']['product_name'] = '';
+				}
+
+			if ($data['ProductOptionLink_status']) {
+					$data['product_link_value'] = array();
+					foreach ($product_options as $product_option) {
+					  if ($product_option['type'] == 'link') {
+						foreach ($product_option['product_option_value'] as $product_link) {
+
+							$link_info = $this->model_catalog_product->getProduct($product_link['quantity']);
+								if ($link_info)	{
+									$data['product_link_value'][]= array (
+									'product_id'     	     => $link_info['product_id'],
+									'name'      			 => $link_info['name']
+									);
+								}
+						}
+					  }
+					}
+			}
+				]]></add>
+		</operation>
+
+		<operation>
+			<search><![CDATA[
+				$product_option['type'] == 'checkbox'
+				]]>
+			</search>
+				<add position="replace"><![CDATA[
+			$product_option['type'] == 'link' || $product_option['type'] == 'checkbox'
+				]]></add>
+		</operation>
+	</file>
+
+	<file path="admin/view/template/catalog/product_form.tpl">
+		<operation>
+			<search><![CDATA[
+				<?php if ($product_option['required']) { ?>
+				]]>
+			</search>
+				<add position="replace"><![CDATA[
+			<?php if ($product_option['type'] == 'link') { ?>
+				<option value="0" selected="selected" ><?php echo $text_no; ?></option>
+			<?php } elseif ($product_option['required']) { ?>
+				]]></add>
+		</operation>
+
+		<operation>
+			<search><![CDATA[
+				<?php if ($product_option['type'] == 'text') { ?>
+				]]>
+			</search>
+				<add position="before"><![CDATA[
+			<?php if ($product_option['type'] == 'link' && $ProductOptionLink_status) { ?>
+						<div class="form-group">
+							<label class="col-sm-2 control-label"><?php echo $entry_link_view; ?></label>
+						<div class="col-sm-10">
+							<select name="product_option[<?php echo $option_row; ?>][value]" id="product_option[<?php echo $option_row; ?>][value]" class="form-control">
+								<?php if ($product_option['value'] == '1') { ?>
+									<option value="0"><?php echo $link_view_0; ?></option>
+									<option value="2"><?php echo $link_view_2; ?></option>
+									<option value="1" selected><?php echo $link_view_1; ?></option>
+									<option value="3"><?php echo $link_view_3; ?></option>
+								<?php } elseif ($product_option['value'] == '2') { ?>
+									<option value="0"><?php echo $link_view_0; ?></option>
+									<option value="2" selected><?php echo $link_view_2; ?></option>
+									<option value="1"><?php echo $link_view_1; ?></option>
+									<option value="3"><?php echo $link_view_3; ?></option>
+								<?php } elseif ($product_option['value'] == '3') { ?>
+									<option value="0"><?php echo $link_view_0; ?></option>
+									<option value="2"><?php echo $link_view_2; ?></option>
+									<option value="1"><?php echo $link_view_1; ?></option>
+									<option value="3" selected><?php echo $link_view_3; ?></option>
+								<?php } else { ?>
+									<option value="0" selected><?php echo $link_view_0; ?></option>
+									<option value="2"><?php echo $link_view_2; ?></option>
+									<option value="1"><?php echo $link_view_1; ?></option>
+									<option value="3"><?php echo $link_view_3; ?></option>
+								<?php } ?>
+							</select>
+                        </div>
+                      </div>
+					  <div class="table-responsive">
+						<table id="option-value<?php echo $option_row; ?>" class="table table-striped table-bordered table-hover" >
+                          <thead>
+                            <tr>
+								<td class="text-center"><?php echo $entry_option_value; ?></td>
+								<td class="text-center"><?php echo $entry_link; ?></td>
+								<td class="text-center col-sm-4"><?php echo $entry_linkproduct; ?></td>
+								<td class="text-center" style="width:40px">
+									<?php echo $entry_link_name; ?>
+								</td>
+								<td class="text-center"><?php echo $entry_link_image; ?></td>
+								<td></td>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <?php foreach ($product_option['product_option_value'] as $product_option_value) { ?>
+                            <tr id="option-value-row<?php echo $option_value_row; ?>">
+							  <td class="text-left"><select name="product_option[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][option_value_id]" class="form-control">
+                                  <?php if (isset($option_values[$product_option['option_id']])) { ?>
+                                  <?php foreach ($option_values[$product_option['option_id']] as $option_value) { ?>
+                                  <?php if ($option_value['option_value_id'] == $product_option_value['option_value_id']) { ?>
+                                  <option value="<?php echo $option_value['option_value_id']; ?>" selected="selected"><?php echo $option_value['name']; ?></option>
+                                  <?php } else { ?>
+                                  <option value="<?php echo $option_value['option_value_id']; ?>"><?php echo $option_value['name']; ?></option>
+                                  <?php } ?>
+                                  <?php } ?>
+                                  <?php } ?>
+                                </select>
+                                <input type="hidden" name="product_option[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][product_option_value_id]" value="<?php echo $product_option_value['product_option_value_id']; ?>" /></td>
+								<td class="text-right">
+									<input type="text" id="link[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][quantity]" placeholder="<?php echo $entry_link; ?>" class="form-control" />
+									<input type="hidden" name="product_option[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][quantity]" value="<?php echo $product_option_value['quantity']; ?>"/>
+								</td>
+								<td class="text-center">
+									<?php $link_name_on =''; ?>
+									<?php $link_name_off =''; ?>
+									<?php if ($product_link_value) { ?>
+										<?php foreach ($product_link_value as $product_link) { ?>
+											<?php if ($product_link['product_id'] == $product_option_value['quantity'] && !$link_name_on) { ?>
+												<input type="text" title="<?php echo $product_link['name']; ?>" disabled="disabled" id="product_link[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][quantity]" value="<?php echo $product_link['name']; ?>" class="form-control text-left"/>
+												<?php $link_name_on=$product_link['name']; ?>
+											<?php } elseif (!$product_option_value['quantity'] && !$link_name_off) { ?>
+												<input type="text" disabled="disabled" id="product_link[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][quantity]" class="form-control text-left"/>
+												<?php $link_name_off=$product_link['name']; ?>
+											<?php } ?>
+										<?php } ?>
+									<?php } else { ?>
+										<input type="text" disabled="disabled" id="product_link[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][quantity]" class="form-control text-left"/>
+									<?php } ?>
+								</td>
+								<td class="text-center">
+									<?php if ($product_option_value['subtract']) { ?>
+										<input type="checkbox" name="product_option[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][subtract]" data-on="<?php echo $text_on; ?>" data-off="<?php echo $text_off; ?>" checked data-toggle="toggle" value='1' >
+									<?php } else { ?>
+										<input type="checkbox" name="product_option[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][subtract]" data-on="<?php echo $text_on; ?>" data-off="<?php echo $text_off; ?>" data-toggle="toggle" value='1' >
+									<?php } ?>
+								</td>
+								<td class="text-center">
+									<select name="product_option[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][price_prefix]" class="form-control">
+										<?php if ($product_option_value['price_prefix'] == '1') { ?>
+											<option value="0"><?php echo $text_off; ?></option>
+											<option value="1" selected><?php echo $text_option; ?></option>
+											<option value="2"><?php echo $text_product; ?></option>
+										<?php } elseif ($product_option_value['price_prefix'] == '2') { ?>
+											<option value="0"><?php echo $text_off; ?></option>
+											<option value="1"><?php echo $text_option; ?></option>
+											<option value="2" selected><?php echo $text_product; ?></option>
+										<?php } else { ?>
+											<option value="0" selected><?php echo $text_off; ?></option>
+											<option value="1"><?php echo $text_option; ?></option>
+											<option value="2"><?php echo $text_product; ?></option>
+										<?php } ?>
+									</select>
+								</td>
+
+								<script type="text/javascript">
+
+								var option_row = <?php echo $option_row; ?>;
+								var option_value_row = <?php echo $option_value_row; ?>;
+
+									function optionlinkautocomplete(option_row, option_value_row) {
+
+										$('input[id=\'link[' + option_row + '][product_option_value][' + option_value_row + '][quantity]\']').autocomplete({
+											'source': function(request, response) {
+												$.ajax({
+													url: 'index.php?route=catalog/copyOptionLink/autocomplete&token=<?php echo $token; ?>&filter_name=' +  encodeURIComponent(request),
+													dataType: 'json',
+													success: function(json) {
+														response($.map(json, function(item) {
+														return {
+														label: item.name,
+														value: item.product_id
+														}
+														}));
+													}
+												});
+											},
+											'select': function(item) {
+
+													$('input[name=\'product_option[' + option_row + '][product_option_value][' + option_value_row + '][quantity]\']').val(item['value']);
+													$('input[id=\'product_link[' + option_row + '][product_option_value][' + option_value_row + '][quantity]\']').val(item['label']);
+													$('input[id=\'product_link[' + option_row + '][product_option_value][' + option_value_row + '][quantity]\']').attr("title",	item['label']);
+
+												}
+										});
+									}
+
+
+									$('#option-value' + option_row + ' tbody tr').each(function(index, element) {
+										optionlinkautocomplete(option_row, option_value_row);
+									});
+
+								</script>
+
+
+								<input type="hidden" name="product_option[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][price]" value="<?php echo $product_option_value['price']; ?>"/>
+								<input type="hidden" name="product_option[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][points_prefix]" value="+"/>
+								<input type="hidden" name="product_option[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][points]" value="<?php echo $product_option_value['points']; ?>"/>
+								<input type="hidden" name="product_option[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][weight_prefix]" value="+"/>
+								<input type="hidden" name="product_option[<?php echo $option_row; ?>][product_option_value][<?php echo $option_value_row; ?>][weight]" value="<?php echo $product_option_value['weight']; ?>"/>
+
+							  <td class="text-left"><button type="button" onclick="$(this).tooltip('destroy');$('#option-value-row<?php echo $option_value_row; ?>').remove();" data-toggle="tooltip" title="<?php echo $button_remove; ?>" class="btn btn-danger"><i class="fa fa-minus-circle"></i></button></td>
+							</tr>
+                            <?php $option_value_row++; ?>
+                            <?php } ?>
+                          </tbody>
+                          <tfoot>
+                            <tr>
+                              <td colspan="2"></td>
+								<td class="text-centr"><button type="button" class="btn btn-primary" onclick="modal_product_main('<?php echo $option_row; ?>', '<?php echo $product_option['option_id']; ?>', '<?php echo $product_option['type']; ?>');" data-toggle="tooltip" title="<?php echo $entry_link_copy_title; ?>"><i ><?php echo $entry_link_copy; ?></i></button></td>
+								<style>
+									#modal_product_main {
+										position: fixed;
+										left: 50%;
+										top: 50%;
+										transform: translate(-50%,-50%);
+									}
+								</style>
+							  <td colspan="6"></td>
+                              <td class="text-left"><button type="button" onclick="addOptionLink('<?php echo $option_row; ?>');" data-toggle="tooltip" title="<?php echo $button_option_value_add; ?>" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button></td>
+                            </tr>
+                          </tfoot>
+						</table>
+                      </div>
+					  <select id="option-values<?php echo $option_row; ?>" style="display: none;">
+                        <?php if (isset($option_values[$product_option['option_id']])) { ?>
+                        <?php foreach ($option_values[$product_option['option_id']] as $option_value) { ?>
+                        <option value="<?php echo $option_value['option_value_id']; ?>"><?php echo $option_value['name']; ?></option>
+                        <?php } ?>
+                        <?php } ?>
+                      </select>
+                      <?php } elseif ($product_option['type'] == 'link') {?>
+							<div class="alert alert-danger">
+								<?php echo $link_danger; ?>
+							</div>
+					  <?php } ?>
+				]]></add>
+		</operation>
+
+		<operation>
+			<search><![CDATA[
+				html += '	      <option value="1"><?php echo $text_yes; ?></option>';
+				]]>
+			</search>
+				<add position="replace"><![CDATA[
+			if (!(item['type'] == 'link')) {
+				html += '	      <option value="1"><?php echo $text_yes; ?></option>';
+			}
+				]]></add>
+		</operation>
+
+		<operation>
+			<search><![CDATA[
+				if (item['type'] == 'text') {
+				]]>
+			</search>
+				<add position="before"><![CDATA[
+			if (item['type'] == 'link' && <?php echo $ProductOptionLink_status; ?>) {
+				html += '<div class="table-responsive">';
+
+				html += '	<div class="form-group">';
+				html += '	  <label class="col-sm-2 control-label"><?php echo $entry_link_view; ?></label>';
+				html += '	  <div class="col-sm-10"><select name="product_option[' + option_row + '][value]" id="product_option[' + option_row + '][value]" class="form-control">';
+				if (<?php echo $ProductOptionLink_link_view; ?> == '1') {
+					html += '	      <option value="0"><?php echo $link_view_0; ?></option>';
+					html += '	      <option value="2"><?php echo $link_view_2; ?></option>';
+					html += '	      <option value="1" selected><?php echo $link_view_1; ?></option>';
+					html += '	      <option value="3"><?php echo $link_view_3; ?></option>';
+				} else if (<?php echo $ProductOptionLink_link_view; ?> == '2') {
+					html += '	      <option value="0"><?php echo $link_view_0; ?></option>';
+					html += '	      <option value="2" selected><?php echo $link_view_2; ?></option>';
+					html += '	      <option value="1"><?php echo $link_view_1; ?></option>';
+					html += '	      <option value="3"><?php echo $link_view_3; ?></option>';
+				} else if (<?php echo $ProductOptionLink_link_view; ?> == '3') {
+					html += '	      <option value="0"><?php echo $link_view_0; ?></option>';
+					html += '	      <option value="2"><?php echo $link_view_2; ?></option>';
+					html += '	      <option value="1"><?php echo $link_view_1; ?></option>';
+					html += '	      <option value="3" selected><?php echo $link_view_3; ?></option>';
+				} else {
+					html += '	      <option value="0" selected><?php echo $link_view_0; ?></option>';
+					html += '	      <option value="2"><?php echo $link_view_2; ?></option>';
+					html += '	      <option value="1"><?php echo $link_view_1; ?></option>';
+					html += '	      <option value="3"><?php echo $link_view_3; ?></option>';
+				}
+				html += '	  </select></div>';
+				html += '	</div>';
+
+
+				html += '  <table id="option-value' + option_row + '" class="table table-striped table-bordered table-hover">';
+				html += '  	 <thead>';
+				html += '      <tr>';
+				html += '        <td class="text-center"><?php echo $entry_option_value; ?></td>';
+				html += '        <td class="text-center"><?php echo $entry_link; ?></td>';
+				html += '        <td class="text-center col-sm-4"><?php echo $entry_linkproduct; ?></td>';
+				html += '        <td class="text-center" style="width:40px"><?php echo $entry_link_name; ?></td>';
+				html += '        <td class="text-center"><?php echo $entry_link_image; ?></td>';
+				html += '        <td></td>';
+				html += '      </tr>';
+				html += '  	 </thead>';
+				html += '  	 <tbody>';
+				html += '    </tbody>';
+				html += '    <tfoot>';
+				html += '      <tr>';
+				if ('<?php echo $product_main['product_id']; ?>') {
+					html += '			<td colspan="2"></td>';
+					html += '			<td class="text-centr"><button type="button" class="btn btn-primary" onclick="modal_product_main(' + option_row + ', ' + item['value'] + ', \'' + item['type'] + '\');" data-toggle="tooltip" title="<?php echo $entry_link_copy_title; ?>"><i ><?php echo $entry_link_copy; ?></i></button></td>';
+				}
+				html += '        <td colspan="6"></td>';
+				html += '        <td class="text-left"><button type="button" onclick="addOptionLink(' + option_row + ');" data-toggle="tooltip" title="<?php echo $button_option_value_add; ?>" class="btn btn-primary"><i class="fa fa-plus-circle"></i></button></td>';
+				html += '      </tr>';
+				html += '    </tfoot>';
+				html += '  </table>';
+				html += '</div>';
+
+				html += '  <select id="option-values' + option_row + '" style="display: none;">';
+
+				for (i = 0; i < item['option_value'].length; i++) {
+					html += '  <option value="' + item['option_value'][i]['option_value_id'] + '">' + item['option_value'][i]['name'] + '</option>';
+				}
+
+				html += '  </select>';
+				html += '</div>';
+			} else if (item['type'] == 'link') {
+				html +=	'<div class="alert alert-danger">';
+				html +=	'<?php echo $link_danger; ?>';
+				html +=	'</div>';
+			}
+				]]></add>
+		</operation>
+
+		<operation>
+			<search><![CDATA[
+				function addOptionValue(option_row) {
+				]]>
+			</search>
+				<add position="before"><![CDATA[
+				if (<?php echo $ProductOptionLink_status; ?>) {
+					function addOptionLink(option_row) {
+						html  = '<tr id="option-value-row' + option_value_row + '">';
+
+						html += '  <td class="text-left"><select name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][option_value_id]" class="form-control">';
+						html += $('#option-values' + option_row).html();
+						html += '  </select><input type="hidden" name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][product_option_value_id]" value="" /></td>';
+
+						html += '  <td class="text-right"><input type="text" id="link[' + option_row + '][product_option_value][' + option_value_row + '][quantity]" placeholder="<?php echo $entry_link; ?>" class="form-control"/> </td>';
+
+						html += '  <td class="text"><input type="text" id="product_link[' + option_row + '][product_option_value][' + option_value_row + '][quantity]" class="form-control text-left" disabled/> </td>';
+
+						html += '  <td class="hidden"><input name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][quantity]" value=""/> </td>';
+
+						if (<?php echo $ProductOptionLink_on_off_name; ?>) {
+							html += '<td class="text-center"><input type="checkbox" data-toggle="toggle" name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][subtract]" data-on="<?php echo $text_on; ?>" data-off="<?php echo $text_off; ?>" checked="checked"  value="1" /> </td>';
+						}else{
+							html += '<td class="text-center"><input type="checkbox" data-toggle="toggle" name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][subtract]" data-on="<?php echo $text_on; ?>" data-off="<?php echo $text_off; ?>"  value="1" /> </td>';
+						}
+
+						html += '<td class="text-center"><select name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][price_prefix]" class="form-control">';
+								if (<?php echo $ProductOptionLink_on_off_images; ?> == '1') {
+									html +=	'<option value="0"><?php echo $text_off; ?></option>';
+									html +=	'<option value="1" selected><?php echo $text_option; ?></option>';
+									html +=	'<option value="2"><?php echo $text_product; ?></option>';
+								} else if (<?php echo $ProductOptionLink_on_off_images; ?> == '2') {
+									html +=	'<option value="0"><?php echo $text_off; ?></option>';
+									html +=	'<option value="1"><?php echo $text_option; ?></option>';
+									html +=	'<option value="2" selected><?php echo $text_product; ?></option>';
+								} else {
+									html +=	'<option value="0" selected><?php echo $text_off; ?></option>';
+									html +=	'<option value="1"><?php echo $text_option; ?></option>';
+									html +=	'<option value="2"><?php echo $text_product; ?></option>';
+								}
+						html +=	'</select></td>';
+
+						html += '  <td class="hidden"><input name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][price]" value="0" /> </td>';
+
+						html += '  <td class="hidden"><input name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][points_prefix]" value="+"/>';
+						html += '  <input name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][points]" value="0"  /></td>';
+
+						html += '  <td class="hidden"><input name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][weight_prefix]" value="+"/>';
+						html += '  <input name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][weight]" value="0" /></td>';
+
+						html += '  <td class="text-left"><button type="button" onclick="$(this).tooltip(\'destroy\');$(\'#option-value-row' + option_value_row + '\').remove();" data-toggle="tooltip" rel="tooltip" title="<?php echo $button_remove; ?>" class="btn btn-danger"><i class="fa fa-minus-circle"></i></button></td>';
+						html += '</tr>';
+
+						$('#option-value' + option_row + ' tbody').append(html);
+						$('[rel=tooltip]').tooltip();
+
+						optionlinkautocomplete(option_row, option_value_row);
+						option_value_row++;
+					}
+
+
+					function optionlinkautocomplete(option_row, option_value_row) {
+						$('input[id=\'link[' + option_row + '][product_option_value][' + option_value_row + '][quantity]\']').autocomplete({
+							'source': function(request, response) {
+								$.ajax({
+									url: 'index.php?route=catalog/copyOptionLink/autocomplete&token=<?php echo $token; ?>&filter_name=' +  encodeURIComponent(request),
+									dataType: 'json',
+									success: function(json) {
+										response($.map(json, function(item) {
+											return {
+												label: item.name,
+												value: item.product_id
+											}
+										}));
+									}
+								});
+							},
+							'select': function(item) {
+
+									$('input[name=\'product_option[' + option_row + '][product_option_value][' + option_value_row + '][quantity]\']').val(item['value'] );
+									$('input[id=\'product_link[' + option_row + '][product_option_value][' + option_value_row + '][quantity]\']').val(item['label']);
+									$('input[id=\'product_link[' + option_row + '][product_option_value][' + option_value_row + '][quantity]\']').attr("title",	item['label']);
+
+								}
+						});
+					}
+
+
+					$('#option-value' + option_row + ' tbody tr').each(function(index, element) {
+						optionlinkautocomplete(option_row, option_value_row);
+					});
+
+					function modal_product_main(option_row, product_option_option_id, product_option_type) {
+
+						if (document.getElementById("modal_product_main")){
+							document.getElementById("modal_product_main").remove();
+						};
+
+						$('#content').after(
+						'<div class="modal fade" id="modal_product_main"  tabindex="-1" role="dialog">'
+							+'<div class="modal-dialog "  role="document">'
+								+'<div class="modal-content">'
+									+'<div class="modal-header text-center">'
+										+'<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>'
+										+'<h3 class="modal-title"><?php echo $entry_modal_product_main; ?></h3>'
+									+'</div>'
+
+									+'<div class="modal-body text-center">'
+										+ '<h4 class="modal-title">' + $('#input-name1').val() + '</h4><br>'
+										+ '<h3>"'+ $('[href = #tab-option' + option_row + ']').text() +'"</h3>'
+										+ ' <select id="product_main' + option_row + '" class="form-control">'
+											+ $('#option-values' + option_row).html()
+										+ '</select>'
+									+'</div>'
+
+									+'<div class="modal-footer text-center">'
+										+'<button type="button" class="btn btn-primary" onclick="copyOptionLink(' + option_row + ', ' + product_option_option_id + ', \'' + product_option_type + '\')" data-dismiss="modal" >'+'OK'+'</button>'
+										+'<button type="button" class="btn btn-default" data-dismiss="modal">'+'Закрыть'+'</button>'
+									+'</div>'
+								+'</div>'
+							+'</div>'
+						+'</div>');
+						$('#modal_product_main').modal('show');
+					}
+
+					function copyOptionLink (option_row, product_option_option_id, product_option_type) {
+
+						$('#modal_product_main').on('hidden.bs.modal', function () {
+
+							var data_copyOptionLink = $('#option-value'+option_row+' :input').serializeArray();
+
+												$.ajax({
+													url: 'index.php?route=catalog/copyOptionLink&token=' + getURLVar('token'),
+													dataType: 'html',
+													type:'POST',
+													data: {
+														product_main : {product_id:'<?php echo $product_main['product_id']; ?>', product_name:$('#input-name1').val(), option_value_id:$('#product_main' + option_row + ' option:selected' ).val()},
+														product_option : {name:$('[href = #tab-option' + option_row + ']').text(), option_id:product_option_option_id, type:product_option_type},
+														option_row : option_row,
+														option_value_row : option_value_row,
+														product_option_value : $('#product_option\\[' + option_row + '\\]\\[value\\] option:selected' ).val(),
+														data_copyOptionLink : data_copyOptionLink,
+													},
+
+													success: function(html) {
+														$('#content').after('<div class="modal fade" id="modal_copyOptionLink"  tabindex="-1" role="dialog">'+ html +'</div>');
+														$('#modal_copyOptionLink').modal('show');
+													}
+												});
+							if (document.getElementById("modal_copyOptionLink")){
+								document.getElementById("modal_copyOptionLink").remove();
+							};
+						});
+					};
+				}
+				]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/language/russian/product/product.php">
+		<operation>
+			<search><![CDATA[
+				$_['text_instock']
+				]]>
+			</search>
+				<add position="before"><![CDATA[
+				$_['text_link_name']              = 'Название:';
+				$_['text_link_price']             = 'Цена:';
+				$_['text_no_select']			  = '--Выберите значение--';
+				]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/language/english/product/product.php">
+		<operation>
+			<search><![CDATA[
+				$_['text_instock']
+				]]>
+			</search>
+				<add position="before"><![CDATA[
+				$_['text_link_name']              = 'Name:';
+				$_['text_link_price']              = 'Price:';
+				$_['text_no_select']			  = '--Select value--';
+				]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/language/ukrainian/product/product.php">
+		<operation>
+			<search><![CDATA[
+				$_['text_instock']
+				]]>
+			</search>
+				<add position="before"><![CDATA[
+				$_['text_link_name']              = 'Назва:';
+				$_['text_link_price']              = 'Ціна:';
+				$_['text_no_select']			  = '--Оберіть значення--';
+				]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/controller/product/product.php">
+		<operation>
+			<search><![CDATA[
+				$data['options'] = array();
+				]]>
+			</search>
+				<add position="after"><![CDATA[
+			$data['ProductOptionLink_status'] = $this->config->get('ProductOptionLink_status');
+			if ($data['ProductOptionLink_status']) {
+				$data['POL_style'] = $this->config->get('ProductOptionLink_style');
+				$data['ProductOptionLink_on_off_stock'] = $this->config->get('ProductOptionLink_on_off_stock');
+				if ($this->config->get('ProductOptionLink_resize_length')>0) {
+					$data['ProductOptionLink_resize_length'] = $this->config->get('ProductOptionLink_resize_length');
+				} else {
+					$data['ProductOptionLink_resize_length'] = 50;
+				}
+				if ($this->config->get('ProductOptionLink_resize_height')>0) {
+					$data['ProductOptionLink_resize_height'] = $this->config->get('ProductOptionLink_resize_height');
+				} else {
+					$data['ProductOptionLink_resize_height'] = 50;
+				}
+
+				$data['text_instock'] = $this->language->get('text_instock');
+				$data['text_link_name'] = $this->language->get('text_link_name');
+				$data['text_link_price'] = $this->language->get('text_link_price');
+				$data['text_no_select'] = $this->language->get('text_no_select');
+
+				foreach ($this->model_catalog_product->getProductOptions($this->request->get['product_id']) as $links_produkt) {
+
+					if ($links_produkt['type'] == 'link') {
+
+						foreach ($links_produkt['product_option_value'] as $links_value) {
+							$links_product_info = $this->model_catalog_product->getProduct($links_value['quantity']);
+
+							if ($links_product_info['status']) {
+								if (!$links_product_info['special']) {
+									$links_price = $links_product_info['price'];
+								} else {
+									$links_price = $links_product_info['special'];
+								}
+								if ($links_value['price_prefix'] == '1') {
+									$links_image = $links_value['image'];
+								} elseif ($links_value['price_prefix'] == '2'){
+									$links_image = $links_product_info['image'];
+								} else {
+									$links_image = '';
+								}
+
+								$data['links'][$links_produkt['product_option_id']][] = array(
+									'product_option_id'      => $links_produkt['product_option_id'],
+									'product_id'          	 => ceil($links_value['quantity']),
+									'link_name'				 => $links_value['subtract'],
+									'name'                	 => $links_value['name'],
+									'quantity'				 => $links_product_info['quantity'],
+									'links_model'			 => $links_product_info['model'],
+									'links_name'			 => $links_product_info['name'],
+									'links_price'			 => $this->currency->format($links_price, $this->session->data['currency']),
+									'links_stock_status'	 => $links_product_info['stock_status'],
+									'image'                  => $links_image ? $this->model_tool_image->resize($links_image, $data['ProductOptionLink_resize_length'], $data['ProductOptionLink_resize_height']) : '',
+									'href'       			 => $this->url->link('product/product', 'product_id=' . ceil($links_value['quantity']))
+								);
+							}
+						}
+					};
+				}
+			}
+				]]></add>
+		</operation>
+	</file>
+
+	<file path="catalog/view/theme/*/template/product/product.tpl">
+		<operation>
+			<search><![CDATA[<?php echo $footer; ?>]]></search>
+				<add position="before"><![CDATA[
+				<style>
+					<?php if ($POL_style['name']) { ?>.style_name {<?php echo $POL_style['name']; ?>}<?php } ?>
+
+					<?php if ($POL_style['view0']['link']) { ?>.view0_link {<?php echo $POL_style['view0']['link']; ?>}<?php } ?>
+
+					<?php if ($POL_style['view0']['product']) { ?>.view0_product {<?php echo $POL_style['view0']['product']; ?>}<?php } ?>
+
+					<?php if ($POL_style['view0']['noproduct']) { ?>.view0_noproduct {<?php echo $POL_style['view0']['noproduct']; ?>}<?php } ?>
+
+					<?php if ($POL_style['view1']['link']) { ?>.view1_link {<?php echo $POL_style['view1']['link']; ?>}<?php } ?>
+
+					<?php if ($POL_style['view1']['product']) { ?>.view1_product {<?php echo $POL_style['view1']['product']; ?>}<?php } ?>
+
+					<?php if ($POL_style['view1']['noproduct']) { ?>.view1_noproduct {<?php echo $POL_style['view1']['noproduct']; ?>}<?php } ?>
+
+					<?php if ($POL_style['view3']['link']) { ?>.view3_link {<?php echo $POL_style['view3']['link']; ?>}<?php } ?>
+
+					<?php if ($POL_style['view3']['product']) { ?>.view3_product {<?php echo $POL_style['view3']['product']; ?>}<?php } ?>
+
+					<?php if ($POL_style['view3']['noproduct']) { ?>.view3_noproduct {<?php echo $POL_style['view3']['noproduct']; ?>}<?php } ?>
+
+					div.view1_product, div.view1_link, div.view1_noproduct {text-align: center;}
+
+					.table>tbody>tr>td, .table>thead>tr>td {
+						vertical-align: middle;
+						padding: 4px;
+					}
+					.table>tbody>tr:hover {
+						cursor: pointer;
+					}
+				</style>
+				]]></add>
+		</operation>
+		<operation>
+			<search><![CDATA[<?php if ($option['type'] == 'select') { ?>]]></search>
+				<add position="before"><![CDATA[
+			<?php if ($option['type'] == 'link' && $ProductOptionLink_status) { ?>
+			  <div class="form-group">
+				<?php if ($option['value'] != '3') { ?>
+					<div><label class="control-label style_name"><?php echo $option['name']; ?></label></div>
+				<?php } ?>
+				<?php if ($option['value'] == '0') { ?>
+					<?php foreach ($links[$option['product_option_id']] as $links_value) { ?>
+						<?php if (($option['product_option_id']==$links_value['product_option_id']) && (!$ProductOptionLink_on_off_stock || !($links_value['quantity']=='0'))) { ?>
+							<div>
+							  <label class="text-center">
+								<?php if ($links_value['product_id'] == $product_id) {   ?>
+									<a class = "view0_product" style="pointer-events:none" >
+										<?php if ($links_value['image']) { ?>
+											<img src="<?php echo $links_value['image']; ?>" alt="<?php echo $links_value['name']; ?>" class="img-thumbnail view0_product" />
+										<?php } ?>
+										<?php if ($links_value['link_name']) { ?>
+											<?php echo $links_value['name']; ?>
+										<?php } ?>
+									</a>
+								<?php } elseif (!($links_value['product_id'] == 0)) { ?>
+									<div data-toggle="tooltip" title="<?php echo $links_value['links_name']; ?>">
+									<a class = "view0_link" href="<?php echo $links_value['href']?>" >
+										<?php if ($links_value['image']) { ?>
+											<img src="<?php echo $links_value['image']; ?>" alt="<?php echo $links_value['name']; ?>" class="img-thumbnail view0_link" />
+										<?php } ?>
+										<?php if ($links_value['link_name']) { ?>
+											<?php echo $links_value['name']; ?>
+										<?php } ?>
+									</a></div>
+								<?php } else { ?>
+									<a class = "view0_noproduct" >
+										<?php if ($links_value['image']) { ?>
+											<img src="<?php echo $links_value['image']; ?>" alt="<?php echo $links_value['name']; ?>" class="img-thumbnail view0_noproduct" />
+										<?php } ?>
+										<?php if ($links_value['link_name']) { ?>
+											<?php echo $links_value['name']; ?>
+										<?php } ?>
+									</a>
+								<?php } ?>
+							  </label>
+							</div>
+						<?php } ?>
+					<?php } ?>
+				<?php } elseif ($option['value'] == '1') { ?>
+					<?php foreach ($links[$option['product_option_id']] as $links_value) { ?>
+						<?php if (($option['product_option_id']==$links_value['product_option_id']) && (!$ProductOptionLink_on_off_stock || !($links_value['quantity']=='0'))) { ?>
+							  <label class="text-center" style="display: inline-block;">
+								<?php if ($links_value['product_id'] == $product_id) {   ?>
+									<p data-toggle="tooltip" title="<?php echo $links_value['links_name']; ?>">
+									<a style="pointer-events:none" >
+										<?php if ($links_value['image']) { ?>
+											<img src="<?php echo $links_value['image']; ?>" alt="<?php echo $links_value['name']; ?>" class="img-thumbnail view1_product" />
+										<?php } ?>
+										<?php if ($links_value['link_name']) { ?>
+											<div class="form-control view1_product"><?php echo $links_value['name']; ?></div>
+										<?php } ?>
+									</a></p>
+								<?php } elseif (!($links_value['product_id'] == 0)) { ?>
+									<p data-toggle="tooltip" title="<?php echo $links_value['links_name']; ?>">
+									<a href="<?php echo $links_value['href']?>" >
+										<?php if ($links_value['image']) { ?>
+											<img src="<?php echo $links_value['image']; ?>" alt="<?php echo $links_value['name']; ?>" class="img-thumbnail view1_link" />
+										<?php } ?>
+										<?php if ($links_value['link_name']) { ?>
+											<div class="form-control view1_link" ><?php echo $links_value['name']; ?></div>
+										<?php } ?>
+									</a></p>
+								<?php } else { ?>
+									<a >
+										<?php if ($links_value['image']) { ?>
+											<img src="<?php echo $links_value['image']; ?>" alt="<?php echo $links_value['name']; ?>" class="img-thumbnail view1_noproduct" />
+										<?php } ?>
+										<?php if ($links_value['link_name']) { ?>
+											<div class="form-control view1_noproduct"><?php echo $links_value['name']; ?></div>
+										<?php } ?>
+									</a>
+								<?php } ?>
+							  </label>
+						<?php } ?>
+					<?php } ?>
+				<?php } elseif ($option['value'] == '2') { ?>
+					<select onchange="if (options [selectedIndex].value) { window.location.href=options [selectedIndex].value }" class="form-control">
+						<option value=""><?php echo $text_no_select; ?></option>
+						<?php foreach ($links[$option['product_option_id']] as $links_value) { ?>
+							<?php if (($option['product_option_id']==$links_value['product_option_id']) && (!$ProductOptionLink_on_off_stock || !($links_value['quantity']=='0'))) { ?>
+								<?php if ($links_value['product_id'] == $product_id) {   ?>
+									<option selected value=""><?php echo $links_value['name']; ?></option>
+								<?php } elseif (!($links_value['product_id'] == 0)) { ?>
+									<option value="<?php echo $links_value['href']?>">
+										<?php echo $links_value['name']; ?> - <?php echo $links_value['links_price']; ?>
+									</option>
+								<?php } else { ?>
+									<option value=""><?php echo $links_value['name']; ?></option>
+								<?php } ?>
+							<?php } ?>
+						<?php } ?>
+					</select>
+				<?php } elseif ($option['value'] == '3') { ?>
+					<table class="table table-bordered table-hover">
+						<thead>
+							<tr class="style_name">
+								<td class="text-center"><?php echo $option['name']; ?></td>
+								<td class="text-center"><?php echo $text_model; ?></td>
+								<td class="text-center"><?php echo $text_link_name; ?></td>
+								<td class="text-center"><?php echo $text_stock; ?></td>
+								<td class="text-center"><?php echo $text_link_price; ?></td>
+							</tr>
+						</thead>
+
+						<tbody>
+							<?php foreach ($links[$option['product_option_id']] as $links_value) { ?>
+								<?php if (($option['product_option_id']==$links_value['product_option_id']) && (!$ProductOptionLink_on_off_stock || !($links_value['quantity']=='0'))) { ?>
+									<?php if ($links_value['product_id'] == $product_id) {   ?>
+										<tr class = "view3_product">
+											<td class="text-center" >
+												<?php if ($links_value['image']) { ?>
+													<img src="<?php echo $links_value['image']; ?>" alt="<?php echo $links_value['name']; ?>" class="img-thumbnail" />
+												<?php } ?>
+												<?php if ($links_value['link_name']) { ?>
+													<?php echo $links_value['name']; ?>
+												<?php } ?>
+											</td>
+											<td class="text-center">
+												<?php echo $links_value['links_model']; ?>
+											</td>
+											<td class="text-center">
+												<?php echo $links_value['links_name']; ?>
+											</td>
+											<td class="text-center">
+												<?php if ($links_value['quantity']<='0') { ?>
+													<?php echo $links_value['links_stock_status']; ?>
+												<?php } else { ?>
+													<?php echo $text_instock; ?>
+												<?php } ?>
+											</td>
+											<td class="text-center" nowrap>
+												<?php echo $links_value['links_price']; ?>
+											</td>
+										</tr>
+									<?php } elseif (!($links_value['product_id'] == 0)) { ?>
+										<tr class = "view3_link" onclick="window.location.href='<?php echo $links_value['href']?>'">
+											<td class="text-center" >
+												<?php if ($links_value['image']) { ?>
+													<img src="<?php echo $links_value['image']; ?>" alt="<?php echo $links_value['name']; ?>" class="img-thumbnail" />
+												<?php } ?>
+												<?php if ($links_value['link_name']) { ?>
+													<?php echo $links_value['name']; ?>
+												<?php } ?>
+											</td>
+											<td class="text-center">
+												<?php echo $links_value['links_model']; ?>
+											</td>
+											<td class="text-center">
+												<?php echo $links_value['links_name']; ?>
+											</td>
+											<td class="text-center">
+												<?php if ($links_value['quantity']<='0') { ?>
+													<?php echo $links_value['links_stock_status']; ?>
+												<?php } else { ?>
+													<?php echo $text_instock; ?>
+												<?php } ?>
+											</td>
+											<td class="text-center" nowrap>
+												<?php echo $links_value['links_price']; ?>
+											</td>
+										</tr>
+									<?php } else { ?>
+										<tr class = "view3_noproduct">
+											<td class="text-center" >
+												<?php if ($links_value['image']) { ?>
+													<img src="<?php echo $links_value['image']; ?>" alt="<?php echo $links_value['name']; ?>" class="img-thumbnail" />
+												<?php } ?>
+												<?php if ($links_value['link_name']) { ?>
+													<?php echo $links_value['name']; ?>
+												<?php } ?>
+											</td>
+											<td class="text-center">
+												<?php echo $links_value['links_model']; ?>
+											</td>
+											<td class="text-center">
+												<?php echo $links_value['links_name']; ?>
+											</td>
+											<td class="text-center">
+												<?php if ($links_value['quantity']<='0') { ?>
+													<?php echo $links_value['links_stock_status']; ?>
+												<?php } else { ?>
+													<?php echo $text_instock; ?>
+												<?php } ?>
+											</td>
+											<td class="text-center" nowrap>
+												<?php echo $links_value['links_price']; ?>
+											</td>
+										</tr>
+									<?php } ?>
+								<?php } ?>
+							<?php } ?>
+						</tbody>
+					</table>
+				<?php } ?>
+			  </div>
+            <?php } ?>
+				]]></add>
+		</operation>
+	</file>
+</modification>
